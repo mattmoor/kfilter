@@ -1,0 +1,7 @@
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: foo
+spec:
+  # Keep pull request events only.
+  eventType: dev.knative.source.github.issues

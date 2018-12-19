@@ -1,0 +1,56 @@
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+
+required = [
+  "k8s.io/apimachinery/pkg/util/sets/types",
+  "k8s.io/code-generator/cmd/deepcopy-gen",
+  "k8s.io/code-generator/cmd/defaulter-gen",
+  "k8s.io/code-generator/cmd/client-gen",
+  "k8s.io/code-generator/cmd/lister-gen",
+  "k8s.io/code-generator/cmd/informer-gen"
+]
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.11.3"
+
+[[constraint]]
+  name = "k8s.io/code-generator"
+  version = "kubernetes-1.11.3"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.11.3"
+
+[[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.11.3"
+
+[[override]]
+  name = "github.com/knative/pkg"
+  # HEAD as of 2018-12-15
+  revision = "b04c0947ad2f7bf081c0a22a742a49f045e117b2"
+
+[[constraint]]
+  name = "github.com/knative/serving"
+  revision = "d872d6ad3d1e725b807f9877f3aa0680a9e55757"
+
+[[override]]
+  name = "github.com/json-iterator/go"
+  # This is the commit at which k8s depends on this in 1.11
+  # It seems to be broken at HEAD.
+  revision = "f2b4162afba35581b6d4a50d3b8f34e33c144682"
+
+[[override]]
+  name = "go.uber.org/zap"
+  revision = "67bc79d13d155c02fd008f721863ff8cc5f30659"
+  
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true
+
+[[prune.project]]
+  name = "k8s.io/code-generator"
+  unused-packages = false
+  non-go = false

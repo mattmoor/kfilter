@@ -1,0 +1,172 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kfilter-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kfilter-system-admin
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  - secrets
+  - events
+  - serviceaccounts
+  - configmaps
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
+- apiGroups:
+  - kfilter.mattmoor.io
+  resources:
+  - filters
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - patch
+  - watch
+- apiGroups:
+  - serving.knative.dev
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - deletecollection
+  - patch
+  - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kfilter-controller
+  namespace: kfilter-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kfilter-controller-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kfilter-system-admin
+subjects:
+- kind: ServiceAccount
+  name: kfilter-controller
+  namespace: kfilter-system
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: filters.kfilter.mattmoor.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=="Ready")].status
+    name: Ready
+    type: string
+  - JSONPath: .status.conditions[?(@.type=="Ready")].reason
+    name: Reason
+    type: string
+  group: kfilter.mattmoor.io
+  names:
+    categories:
+    - all
+    - mattmoor
+    kind: Filter
+    plural: filters
+  scope: Namespaced
+  version: v1alpha1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kfilter-controller
+  name: kfilter-controller
+  namespace: kfilter-system
+spec:
+  ports:
+  - name: metrics
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: kfilter-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kfilter-controller
+  namespace: kfilter-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kfilter-controller
+  template:
+    metadata:
+      labels:
+        app: kfilter-controller
+    spec:
+      containers:
+      - args:
+        - -logtostderr
+        - -stderrthreshold
+        - INFO
+        - -image
+        - gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/filter@sha256:1bf7d2d7847911d7467a8596244a8278fcf53f2603e232a9fdc5149e5f200979
+        image: gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/controller@sha256:721f7f6cde0923bb95535f79a7ad177d15ef6c8abab743e3606b4165045cb20d
+        name: kfilter-controller
+      serviceAccountName: kfilter-controller
