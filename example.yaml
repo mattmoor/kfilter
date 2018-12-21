@@ -4,4 +4,9 @@ metadata:
   name: foo
 spec:
   # Keep pull request events only.
-  eventType: dev.knative.source.github.issues
+  # eventType: dev.knative.source.github.issues
+  body: {
+    "action": {
+      "[oneof]": ["unlabeled", "labeled"]
+    }
+  }

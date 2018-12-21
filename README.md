@@ -85,9 +85,91 @@ spec:
 
 ```
 
-Currently this only supports a trivial filter: cloud event type, but atop this
-plumbing we can extend the filter power arbitrarily, e.g. matching elements of
-the payload body.
+### Supported Filters
+
+#### Event Type
+
+As shown in the above example, you can filter on event types via:
+
+```yaml
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: im-a-filter
+spec:
+  # Keep pull request events only.
+  eventType: dev.knative.source.github.issues
+```
+
+#### Body Patterns
+
+You can match the body of the event via pattern matches.  The default mode
+of matching is partial matches, so for example the following pattern:
+
+```yaml
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: im-a-filter
+spec:
+  body: {
+    "foo": "bar"
+  }
+```
+
+Will match any body that has a key `"foo"` with value `"bar"`.  For arrays
+the partial match will accept a matching array prefix.
+
+To turn a match from a partial match into an exact match you can wrap it as
+follows:
+
+```yaml
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: im-a-filter
+spec:
+  body: {
+    "[exact]": {
+      "foo": "bar"
+    }
+  }
+```
+
+To match an arbitrary element, you can use the special string `[anything]`,
+so for example if we want to match messages that have the key `"foo"` with
+a slice containing at least three elements we can write:
+
+```yaml
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: im-a-filter
+spec:
+  body: {
+    "foo": [
+      "[anything]",
+      "[anything]",
+      "[anything]"
+    ]
+  }
+```
+
+To match one of several values, you can use the `[oneof]` keyword:
+
+```yaml
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Filter
+metadata:
+  name: im-a-filter
+spec:
+  body: {
+    "foo": {"[oneof]": ["bar", "baz"]}
+  }
+```
+
+This will match any message with a top level key `"foo"` iff it has one of the
+values: `"bar"` or `"baz"`.
 
 
 ### Try it.

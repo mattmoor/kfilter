@@ -17,6 +17,8 @@ limitations under the License.
 package resources
 
 import (
+	"encoding/base64"
+
 	"github.com/knative/pkg/kmeta"
 	"github.com/knative/serving/pkg/apis/serving/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +29,8 @@ import (
 )
 
 func MakeKService(kf *kfv1alpha1.Filter, image string) *v1alpha1.Service {
+	encodedFilter := base64.StdEncoding.EncodeToString(kf.Spec.Body)
+
 	return &v1alpha1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            names.KService(kf),
@@ -43,6 +47,7 @@ func MakeKService(kf *kfv1alpha1.Filter, image string) *v1alpha1.Service {
 								Image: image,
 								Args: []string{
 									"-type", kf.Spec.EventType,
+									"-filter", encodedFilter,
 								},
 							},
 						},

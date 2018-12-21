@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"log"
@@ -24,16 +25,17 @@ import (
 	"time"
 
 	"github.com/knative/pkg/cloudevents"
+
+	"github.com/mattmoor/kfilter/pkg/filter"
 )
 
 var (
-	filterType = flag.String("type", "", "The event type to keep.")
+	filterType    = flag.String("type", "", "The event type to keep.")
+	encodedFilter = flag.String("filter", "", "The base64 encoded filter expression.")
 )
 
-type Filter struct{}
-
-type event struct {
-	Data string `json:"data,omitEmpty"`
+type Filter struct {
+	m filter.Matcher
 }
 
 func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -47,24 +49,33 @@ func (f *Filter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Received Context: %+v", ctx)
-	log.Printf("Received body as: %q", string(body))
-	e := event{}
-	err = json.Unmarshal(body, &e)
+	log.Printf("Received body as: %#v", string(body))
+
+	var unstructured map[string]interface{}
+	err = json.Unmarshal(body, &unstructured)
 	if err != nil {
-		log.Printf("Failed to unmarshal event data: %s", err)
+		log.Printf("Failed to unmarshal payload: %s", err)
 		// TODO: Actually fail this request?
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Only let pull request events through.
-	if ctx.EventType != *filterType {
+	// If specified, only let pull request events through.
+	if *filterType != "" {
+		if ctx.EventType != *filterType {
+			log.Printf("Skipping: %q", ctx.EventType)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+
+	// Check to see if the compiled filter matches the body.
+	if !f.m.Match(unstructured) {
 		log.Printf("Skipping: %q", ctx.EventType)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	log.Printf("Received event as: %+v", e)
 	setHeaders(ctx, w.Header())
 	w.Write(body)
 }
@@ -89,5 +100,25 @@ func setHeaders(context *cloudevents.EventContext, header http.Header) {
 func main() {
 	flag.Parse()
 
-	http.ListenAndServe(":8080", &Filter{})
+	expression, err := base64.StdEncoding.DecodeString(*encodedFilter)
+	if err != nil {
+		log.Fatalf("Unable to decode filter expression: %v", err)
+	}
+	log.Printf("Got filter expression: %v", string(expression))
+
+	var unstructured map[string]interface{}
+	if err := json.Unmarshal([]byte(expression), &unstructured); err != nil {
+		log.Fatalf("Unable to unmarshal filter expression: %v", err)
+	}
+
+	matcher, err := filter.Compile(unstructured)
+	if err != nil {
+		log.Fatalf("Unable to compile filter expression: %v", err)
+	}
+
+	f := &Filter{
+		m: matcher,
+	}
+
+	http.ListenAndServe(":8080", f)
 }

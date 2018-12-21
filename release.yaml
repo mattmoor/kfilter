@@ -166,7 +166,7 @@ spec:
         - -stderrthreshold
         - INFO
         - -image
-        - gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/filter@sha256:1bf7d2d7847911d7467a8596244a8278fcf53f2603e232a9fdc5149e5f200979
-        image: gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/controller@sha256:721f7f6cde0923bb95535f79a7ad177d15ef6c8abab743e3606b4165045cb20d
+        - gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/filter@sha256:9f9431f81eff2e585352089cc913b227a214ae8af91e14e6e2f9c65deb599d92
+        image: gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/controller@sha256:05b30ff63f9441c4744d4a5f3e733915da72ed624e3de631ef10d7816683278f
         name: kfilter-controller
       serviceAccountName: kfilter-controller

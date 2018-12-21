@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	duckv1alpha1 "github.com/knative/pkg/apis/duck/v1alpha1"
 	"github.com/knative/pkg/kmeta"
 	"github.com/knative/serving/pkg/apis/serving/v1alpha1"
@@ -43,8 +45,14 @@ var _ kmeta.OwnerRefable = (*Filter)(nil)
 
 // FilterSpec is the spec for a Filter resource
 type FilterSpec struct {
-	// A trivial filter that expresses the EventType to keep.
-	EventType string `json:"eventType"`
+	// The cloud event type to keep
+	// +optional
+	EventType string `json:"eventType,omitempty"`
+
+	// The filter to apply.
+	// TODO(mattmoor): More detailed description.
+	// +optional
+	Body json.RawMessage `json:"body,omitempty"`
 }
 
 // FilterStatus is the status for a Filter resource
