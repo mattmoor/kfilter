@@ -32,6 +32,10 @@ func (c *FakeKfilterV1alpha1) Filters(namespace string) v1alpha1.FilterInterface
 	return &FakeFilters{c, namespace}
 }
 
+func (c *FakeKfilterV1alpha1) Transforms(namespace string) v1alpha1.TransformInterface {
+	return &FakeTransforms{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeKfilterV1alpha1) RESTClient() rest.Interface {

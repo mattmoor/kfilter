@@ -55,6 +55,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=kfilter.mattmoor.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("filters"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Kfilter().V1alpha1().Filters().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("transforms"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Kfilter().V1alpha1().Transforms().Informer()}, nil
 
 	}
 

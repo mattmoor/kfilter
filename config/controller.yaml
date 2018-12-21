@@ -33,5 +33,6 @@ spec:
         args: [
           "-logtostderr",
           "-stderrthreshold", "INFO",
-          "-image", "github.com/mattmoor/kfilter/cmd/filter",
+          "-filter", "github.com/mattmoor/kfilter/cmd/filter",
+          "-transform", "github.com/mattmoor/kfilter/cmd/transform",
         ]

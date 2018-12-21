@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
-
 	duckv1alpha1 "github.com/knative/pkg/apis/duck/v1alpha1"
 	"github.com/knative/pkg/kmeta"
 	"github.com/knative/serving/pkg/apis/serving/v1alpha1"
@@ -31,33 +29,26 @@ import (
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Filter is a specification for a Filter resource
-type Filter struct {
+// Transform is a specification for a Transform resource
+type Transform struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   FilterSpec   `json:"spec"`
-	Status FilterStatus `json:"status"`
+	Spec   TransformSpec   `json:"spec"`
+	Status TransformStatus `json:"status"`
 }
 
-// Check that we can create OwnerReferences to a Filter.
-var _ kmeta.OwnerRefable = (*Filter)(nil)
+// Check that we can create OwnerReferences to a Transform.
+var _ kmeta.OwnerRefable = (*Transform)(nil)
 
-// FilterSpec is the spec for a Filter resource
-type FilterSpec struct {
-	// The cloud event type to keep
-	// +optional
-	EventType string `json:"eventType,omitempty"`
-
-	// The filter to apply.
-	// TODO(mattmoor): More detailed description.
-	// +optional
-	Body json.RawMessage `json:"body,omitempty"`
+// TransformSpec is the spec for a Transform resource
+type TransformSpec struct {
+	Template string `json:"template,omitempty"`
 }
 
-// FilterStatus is the status for a Filter resource
-type FilterStatus struct {
-	// Address holds the information needed for a Filter to be the target of an event.
+// TransformStatus is the status for a Transform resource
+type TransformStatus struct {
+	// Address holds the information needed for a Transform to be the target of an event.
 	// +optional
 	Address *duckv1alpha1.Addressable `json:"address,omitempty"`
 
@@ -68,31 +59,19 @@ type FilterStatus struct {
 	Conditions duckv1alpha1.Conditions `json:"conditions,omitempty"`
 }
 
-const (
-	// FilterConditionReady is set when the service is configured
-	// and has available backends ready to receive traffic.
-	FilterConditionReady = duckv1alpha1.ConditionReady
-
-	// FilterConditionServiceReady is set to whether the underlying
-	// Service has come up.
-	FilterConditionServiceReady duckv1alpha1.ConditionType = "ServiceReady"
-)
-
-var condSet = duckv1alpha1.NewLivingConditionSet(FilterConditionServiceReady)
-
-func (r *Filter) GetGroupVersionKind() schema.GroupVersionKind {
-	return SchemeGroupVersion.WithKind("Filter")
+func (r *Transform) GetGroupVersionKind() schema.GroupVersionKind {
+	return SchemeGroupVersion.WithKind("Transform")
 }
 
-func (rs *FilterStatus) GetCondition(t duckv1alpha1.ConditionType) *duckv1alpha1.Condition {
+func (rs *TransformStatus) GetCondition(t duckv1alpha1.ConditionType) *duckv1alpha1.Condition {
 	return condSet.Manage(rs).GetCondition(t)
 }
 
-func (rs *FilterStatus) InitializeConditions() {
+func (rs *TransformStatus) InitializeConditions() {
 	condSet.Manage(rs).InitializeConditions()
 }
 
-func (rs *FilterStatus) PropagateServiceStatus(ss v1alpha1.ServiceStatus) {
+func (rs *TransformStatus) PropagateServiceStatus(ss v1alpha1.ServiceStatus) {
 	rs.Address = ss.Address
 	sr := ss.GetCondition(v1alpha1.ServiceConditionReady)
 	if sr == nil {
@@ -100,18 +79,18 @@ func (rs *FilterStatus) PropagateServiceStatus(ss v1alpha1.ServiceStatus) {
 	}
 	switch sr.Status {
 	case corev1.ConditionTrue:
-		condSet.Manage(rs).MarkTrue(FilterConditionServiceReady)
+		condSet.Manage(rs).MarkTrue(ConditionServiceReady)
 	case corev1.ConditionUnknown, corev1.ConditionFalse:
-		condSet.Manage(rs).MarkFalse(FilterConditionServiceReady, sr.Reason, sr.Message)
+		condSet.Manage(rs).MarkFalse(ConditionServiceReady, sr.Reason, sr.Message)
 	}
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// FilterList is a list of Filter resources
-type FilterList struct {
+// TransformList is a list of Transform resources
+type TransformList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []Filter `json:"items"`
+	Items []Transform `json:"items"`
 }

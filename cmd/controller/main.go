@@ -35,6 +35,7 @@ import (
 	clientset "github.com/mattmoor/kfilter/pkg/client/clientset/versioned"
 	informers "github.com/mattmoor/kfilter/pkg/client/informers/externalversions"
 	"github.com/mattmoor/kfilter/pkg/reconciler/kfilter"
+	"github.com/mattmoor/kfilter/pkg/reconciler/ktransform"
 )
 
 const (
@@ -45,7 +46,8 @@ var (
 	masterURL  = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	kubeconfig = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 
-	filterImage = flag.String("image", "", "The image that implements filtering.")
+	filterImage    = flag.String("filter", "", "The image that implements filtering.")
+	transformImage = flag.String("transform", "", "The image that implements transformation.")
 )
 
 func main() {
@@ -57,7 +59,11 @@ func main() {
 	logger := logging.FromContext(context.TODO()).Named("controller")
 
 	if *filterImage == "" {
-		logger.Fatal("Error -image is unspecified.")
+		logger.Fatal("Error -filter is unspecified.")
+	}
+
+	if *transformImage == "" {
+		logger.Fatal("Error -transform is unspecified.")
 	}
 
 	cfg, err := clientcmd.BuildConfigFromFlags(*masterURL, *kubeconfig)
@@ -96,6 +102,7 @@ func main() {
 
 	// Our shared index informers.
 	filterInformer := kfInformerFactory.Kfilter().V1alpha1().Filters()
+	transformInformer := kfInformerFactory.Kfilter().V1alpha1().Transforms()
 	serviceInformer := servingInformerFactory.Serving().V1alpha1().Services()
 
 	// Add new controllers here.
@@ -107,6 +114,13 @@ func main() {
 			filterInformer,
 			*filterImage,
 		),
+		ktransform.NewController(
+			opt,
+			kfClient,
+			serviceInformer,
+			transformInformer,
+			*transformImage,
+		),
 	}
 
 	go kfInformerFactory.Start(stopCh)
@@ -117,6 +131,7 @@ func main() {
 	for i, synced := range []cache.InformerSynced{
 		serviceInformer.Informer().HasSynced,
 		filterInformer.Informer().HasSynced,
+		transformInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
 			logger.Fatalf("failed to wait for cache at index %v to sync", i)

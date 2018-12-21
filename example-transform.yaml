@@ -1,0 +1,8 @@
+apiVersion: kfilter.mattmoor.io/v1alpha1
+kind: Transform
+metadata:
+  name: bar
+spec:
+  template: |
+    # Apply this simple Transform to the input payload.
+    gotAction: {{ .action }}

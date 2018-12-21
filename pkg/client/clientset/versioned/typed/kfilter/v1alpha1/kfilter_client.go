@@ -28,6 +28,7 @@ import (
 type KfilterV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	FiltersGetter
+	TransformsGetter
 }
 
 // KfilterV1alpha1Client is used to interact with features provided by the kfilter.mattmoor.io group.
@@ -37,6 +38,10 @@ type KfilterV1alpha1Client struct {
 
 func (c *KfilterV1alpha1Client) Filters(namespace string) FilterInterface {
 	return newFilters(c, namespace)
+}
+
+func (c *KfilterV1alpha1Client) Transforms(namespace string) TransformInterface {
+	return newTransforms(c, namespace)
 }
 
 // NewForConfig creates a new KfilterV1alpha1Client for the given config.

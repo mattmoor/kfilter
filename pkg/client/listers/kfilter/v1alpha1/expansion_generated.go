@@ -25,3 +25,11 @@ type FilterListerExpansion interface{}
 // FilterNamespaceListerExpansion allows custom methods to be added to
 // FilterNamespaceLister.
 type FilterNamespaceListerExpansion interface{}
+
+// TransformListerExpansion allows custom methods to be added to
+// TransformLister.
+type TransformListerExpansion interface{}
+
+// TransformNamespaceListerExpansion allows custom methods to be added to
+// TransformNamespaceLister.
+type TransformNamespaceListerExpansion interface{}

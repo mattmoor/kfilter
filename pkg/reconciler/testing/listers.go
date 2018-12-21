@@ -79,3 +79,7 @@ func (l *Listers) GetServiceLister() servinglisters.ServiceLister {
 func (l *Listers) GetFilterLister() kflisters.FilterLister {
 	return kflisters.NewFilterLister(l.indexerFor(&kfv1alpha1.Filter{}))
 }
+
+func (l *Listers) GetTransformLister() kflisters.TransformLister {
+	return kflisters.NewTransformLister(l.indexerFor(&kfv1alpha1.Transform{}))
+}

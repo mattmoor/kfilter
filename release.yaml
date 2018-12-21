@@ -66,6 +66,7 @@ rules:
   - kfilter.mattmoor.io
   resources:
   - filters
+  - transforms
   verbs:
   - get
   - list
@@ -129,6 +130,28 @@ spec:
   scope: Namespaced
   version: v1alpha1
 ---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: transforms.kfilter.mattmoor.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=="Ready")].status
+    name: Ready
+    type: string
+  - JSONPath: .status.conditions[?(@.type=="Ready")].reason
+    name: Reason
+    type: string
+  group: kfilter.mattmoor.io
+  names:
+    categories:
+    - all
+    - mattmoor
+    kind: Transform
+    plural: transforms
+  scope: Namespaced
+  version: v1alpha1
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -165,8 +188,10 @@ spec:
         - -logtostderr
         - -stderrthreshold
         - INFO
-        - -image
+        - -filter
         - gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/filter@sha256:9f9431f81eff2e585352089cc913b227a214ae8af91e14e6e2f9c65deb599d92
-        image: gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/controller@sha256:05b30ff63f9441c4744d4a5f3e733915da72ed624e3de631ef10d7816683278f
+        - -transform
+        - gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/transform@sha256:a5114f6d5eee68b319eea3c835b2140aa9d7c2a1e6ce1e7aa8401fb7d2dcdc31
+        image: gcr.io/mattmoor-public/github.com/mattmoor/kfilter/cmd/controller@sha256:7452f63ad1842bc7fe0be23584c83d912cf13cb02101ba07228290772194bf4f
         name: kfilter-controller
       serviceAccountName: kfilter-controller

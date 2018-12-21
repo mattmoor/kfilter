@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Knative Authors.
+Copyright 2018 Matt Moore
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,12 +14,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package testing
+package names
 
 import (
+	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	kfv1alpha1 "github.com/mattmoor/kfilter/pkg/apis/kfilter/v1alpha1"
 )
 
-type FilterOption func(*kfv1alpha1.Filter)
+func TestNamer(t *testing.T) {
+	tests := []struct {
+		name string
+		kf   *kfv1alpha1.Transform
+		f    func(*kfv1alpha1.Transform) string
+		want string
+	}{{
+		name: "KService",
+		kf: &kfv1alpha1.Transform{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "foo",
+			},
+		},
+		f:    KService,
+		want: "foo",
+	}}
 
-type TransformOption func(*kfv1alpha1.Transform)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.f(test.kf)
+			if got != test.want {
+				t.Errorf("%s() = %v, wanted %v", test.name, got, test.want)
+			}
+		})
+	}
+}

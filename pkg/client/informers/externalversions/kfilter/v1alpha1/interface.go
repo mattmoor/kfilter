@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// Filters returns a FilterInformer.
 	Filters() FilterInformer
+	// Transforms returns a TransformInformer.
+	Transforms() TransformInformer
 }
 
 type version struct {
@@ -42,4 +44,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // Filters returns a FilterInformer.
 func (v *version) Filters() FilterInformer {
 	return &filterInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// Transforms returns a TransformInformer.
+func (v *version) Transforms() TransformInformer {
+	return &transformInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
