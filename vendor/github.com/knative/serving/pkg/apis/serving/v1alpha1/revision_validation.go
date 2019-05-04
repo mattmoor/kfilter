@@ -198,6 +198,13 @@ func validateContainerPorts(ports []corev1.ContainerPort) *apis.FieldError {
 		errs = errs.Also(apis.ErrDisallowedFields(disallowedFields...))
 	}
 
+	// Don't allow userPort to conflict with QueueProxy sidecar
+	if userPort.ContainerPort == RequestQueuePort ||
+		userPort.ContainerPort == RequestQueueAdminPort ||
+		userPort.ContainerPort == RequestQueueMetricsPort {
+		errs = errs.Also(apis.ErrInvalidValue(strconv.Itoa(int(userPort.ContainerPort)), "ContainerPort"))
+	}
+
 	if userPort.ContainerPort < 1 || userPort.ContainerPort > 65535 {
 		errs = errs.Also(apis.ErrOutOfBoundsValue(strconv.Itoa(int(userPort.ContainerPort)), "1", "65535", "ContainerPort"))
 	}

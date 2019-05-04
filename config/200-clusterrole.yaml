@@ -21,3 +21,6 @@ rules:
   - apiGroups: ["serving.knative.dev"]
     resources: ["services"]
     verbs: ["get", "list", "create", "update", "delete", "deletecollection", "patch", "watch"]
+  - apiGroups: ["eventing.knative.dev"]
+    resources: ["channels", "channels/status"]
+    verbs: ["get", "list", "create", "update", "delete", "deletecollection", "patch", "watch"]

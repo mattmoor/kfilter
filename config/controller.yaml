@@ -35,4 +35,5 @@ spec:
           "-stderrthreshold", "INFO",
           "-filter", "github.com/mattmoor/kfilter/cmd/filter",
           "-transform", "github.com/mattmoor/kfilter/cmd/transform",
+          "-khannel", "github.com/mattmoor/kfilter/cmd/khannel",
         ]

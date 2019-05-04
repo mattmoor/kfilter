@@ -21,6 +21,8 @@ import (
 	"flag"
 	"time"
 
+	eventingclientset "github.com/knative/eventing/pkg/client/clientset/versioned"
+	eventinginformers "github.com/knative/eventing/pkg/client/informers/externalversions"
 	"github.com/knative/pkg/configmap"
 	"github.com/knative/pkg/controller"
 	"github.com/knative/pkg/logging"
@@ -35,6 +37,7 @@ import (
 	clientset "github.com/mattmoor/kfilter/pkg/client/clientset/versioned"
 	informers "github.com/mattmoor/kfilter/pkg/client/informers/externalversions"
 	"github.com/mattmoor/kfilter/pkg/reconciler/kfilter"
+	"github.com/mattmoor/kfilter/pkg/reconciler/khannel"
 	"github.com/mattmoor/kfilter/pkg/reconciler/ktransform"
 )
 
@@ -46,6 +49,7 @@ var (
 	masterURL  = flag.String("kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	kubeconfig = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 
+	khannelImage   = flag.String("khannel", "", "The image that implements khanneling.")
 	filterImage    = flag.String("filter", "", "The image that implements filtering.")
 	transformImage = flag.String("transform", "", "The image that implements transformation.")
 )
@@ -57,6 +61,10 @@ func main() {
 	stopCh := signals.SetupSignalHandler()
 
 	logger := logging.FromContext(context.TODO()).Named("controller")
+
+	if *khannelImage == "" {
+		logger.Fatal("Error -khannel is unspecified.")
+	}
 
 	if *filterImage == "" {
 		logger.Fatal("Error -filter is unspecified.")
@@ -81,6 +89,11 @@ func main() {
 		logger.Fatalf("Error building serving clientset: %v", err)
 	}
 
+	eventingClient, err := eventingclientset.NewForConfig(cfg)
+	if err != nil {
+		logger.Fatalf("Error building eventing clientset: %v", err)
+	}
+
 	kfClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		logger.Fatalf("Error building run clientset: %s", err.Error())
@@ -99,11 +112,13 @@ func main() {
 
 	kfInformerFactory := informers.NewSharedInformerFactory(kfClient, opt.ResyncPeriod)
 	servingInformerFactory := servinginformers.NewSharedInformerFactory(servingClient, opt.ResyncPeriod)
+	eventingInformerFactory := eventinginformers.NewSharedInformerFactory(eventingClient, opt.ResyncPeriod)
 
 	// Our shared index informers.
 	filterInformer := kfInformerFactory.Kfilter().V1alpha1().Filters()
 	transformInformer := kfInformerFactory.Kfilter().V1alpha1().Transforms()
 	serviceInformer := servingInformerFactory.Serving().V1alpha1().Services()
+	channelInformer := eventingInformerFactory.Eventing().V1alpha1().Channels()
 
 	// Add new controllers here.
 	controllers := []*controller.Impl{
@@ -121,10 +136,18 @@ func main() {
 			transformInformer,
 			*transformImage,
 		),
+		khannel.NewController(
+			opt,
+			eventingClient,
+			serviceInformer,
+			channelInformer,
+			*khannelImage,
+		),
 	}
 
 	go kfInformerFactory.Start(stopCh)
 	go servingInformerFactory.Start(stopCh)
+	go eventingInformerFactory.Start(stopCh)
 
 	// Wait for the caches to be synced before starting controllers.
 	logger.Info("Waiting for informer caches to sync")
@@ -132,6 +155,7 @@ func main() {
 		serviceInformer.Informer().HasSynced,
 		filterInformer.Informer().HasSynced,
 		transformInformer.Informer().HasSynced,
+		channelInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
 			logger.Fatalf("failed to wait for cache at index %v to sync", i)

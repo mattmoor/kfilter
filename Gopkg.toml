@@ -33,7 +33,11 @@ required = [
 
 [[constraint]]
   name = "github.com/knative/serving"
-  revision = "d872d6ad3d1e725b807f9877f3aa0680a9e55757"
+  version = "0.3.0"
+
+[[constraint]]
+  name = "github.com/knative/eventing"
+  version = "0.3.0"
 
 [[override]]
   name = "github.com/json-iterator/go"
